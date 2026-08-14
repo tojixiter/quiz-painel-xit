@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Descubra seu Painel Ideal | TOJI XITER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #8b5cf6;
+        --primary-dark: #7c3aed;
+        --red: #ef4444;
+        --gold: #eab308;
+        --bg: #06060e;
+        --bg2: #0d0b18;
+        --surface: #110f1e;
+        --surface2: #1a1730;
+        --border: #2a2545;
+        --text-muted: #9ca3af;
+        --text-dim: #6b7280;
+    }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Rajdhani', sans-serif;
+        background: var(--bg);
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        overflow-x: hidden;
+    }
+    #bg-canvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+    .quiz-shell {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 480px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 25px 60px -12px rgba(0,0,0,0.6), 0 0 40px rgba(139,92,246,0.08);
+        overflow: hidden;
+    }
+
+    /* Progresso */
+    .quiz-progress-wrap { padding: 18px 20px 0; }
+    .quiz-progress-track { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+    .quiz-progress-bar { height: 100%; width: 20%; background: linear-gradient(90deg, var(--primary-dark), var(--primary)); border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 10px rgba(139,92,246,0.6); }
+    .quiz-progress-label { display:flex; justify-content:space-between; margin-top:8px; font-size:12px; color:var(--text-dim); font-weight:700; letter-spacing:0.03em; }
+    .quiz-progress-label span:last-child { color: var(--primary); }
+
+    .quiz-body { padding: 24px 24px 28px; min-height: 380px; display:flex; flex-direction:column; }
+
+    /* Telas */
+    .q-screen { display:none; flex-direction:column; flex:1; animation: fadeSlide 0.4s ease; }
+    .q-screen.active { display:flex; }
+    @keyframes fadeSlide { from { opacity:0; transform: translateX(16px); } to { opacity:1; transform: translateX(0); } }
+
+    /* Intro */
+    .intro-badge {
+        display:inline-flex; align-items:center; gap:6px;
+        background: rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.35);
+        color: var(--primary); font-size:12px; font-weight:800; letter-spacing:0.05em;
+        padding: 6px 14px; border-radius: 99px; margin: 0 auto 18px; text-transform:uppercase;
+    }
+    .intro-title {
+        font-family:'Bebas Neue', sans-serif; font-size: 2.1rem; text-align:center; line-height:1.1;
+        letter-spacing:0.03em; margin-bottom: 12px;
+    }
+    .intro-title .hl { color: var(--primary); filter: drop-shadow(0 0 8px var(--primary)); }
+    .intro-sub { text-align:center; color: var(--text-muted); font-size:15px; font-weight:600; margin-bottom:24px; line-height:1.5; }
+    .intro-stats { display:flex; justify-content:center; gap:18px; margin-bottom:26px; }
+    .intro-stat { text-align:center; }
+    .intro-stat b { display:block; font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color: var(--primary); }
+    .intro-stat span { font-size:11px; color: var(--text-dim); font-weight:700; }
+
+    /* Perguntas */
+    .q-title { font-family:'Bebas Neue', sans-serif; font-size:1.55rem; letter-spacing:0.02em; line-height:1.2; margin-bottom:20px; }
+    .q-options { display:flex; flex-direction:column; gap:10px; flex:1; }
+    .q-opt {
+        display:flex; align-items:center; gap:12px;
+        background: var(--surface2); border: 2px solid var(--border);
+        border-radius: 10px; padding: 15px 16px; cursor:pointer;
+        font-weight:700; font-size:14.5px; color:#e5e7eb; text-align:left;
+        transition: border-color 0.2s, transform 0.15s, background 0.2s;
+    }
+    .q-opt:hover { border-color: var(--primary); background: rgba(139,92,246,0.08); transform: translateY(-1px); }
+    .q-opt:active { transform: scale(0.98); }
+    .q-opt .q-emoji { font-size:20px; flex-shrink:0; }
+    .q-opt.selected { border-color: var(--primary); background: rgba(139,92,246,0.15); box-shadow: 0 0 0 1px var(--primary); }
+
+    /* Botão principal (mesmo estilo verde do site) */
+    @keyframes glow-green-pulse {
+        0%,100% { box-shadow: 0 8px 24px rgba(22,163,74,0.45), 0 0 24px rgba(74,222,128,0.35); }
+        50% { box-shadow: 0 10px 32px rgba(22,163,74,0.6), 0 0 42px rgba(74,222,128,0.55); }
+    }
+    @keyframes shine-sweep { 0%{left:-60%;} 55%{left:130%;} 100%{left:130%;} }
+    .btn-verde {
+        display:flex; align-items:center; justify-content:center; gap:8px;
+        width:100%; position:relative; overflow:hidden;
+        background: linear-gradient(135deg, #4ade80, #16a34a); color:#fff;
+        font-family:'Bebas Neue', sans-serif; font-size:1.15rem; letter-spacing:0.06em;
+        padding:16px; border:none; border-radius:99px; cursor:pointer; text-decoration:none;
+        animation: glow-green-pulse 2.2s ease-in-out infinite; transition: transform 0.2s;
+    }
+    .btn-verde:hover { transform: scale(1.02); }
+    .btn-verde::before {
+        content:''; position:absolute; top:0; left:-60%; width:45%; height:100%;
+        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.65), transparent);
+        transform: skewX(-20deg); animation: shine-sweep 2.6s ease-in-out infinite;
+    }
+    .btn-verde.dourado { background: linear-gradient(135deg, #facc15, #ca8a04); color:#1a1204; }
+    .btn-verde:disabled { opacity:0.4; pointer-events:none; animation:none; }
+
+    /* Loading */
+    .loading-screen { align-items:center; justify-content:center; text-align:center; padding-top:20px; }
+    .loading-ring {
+        width:64px; height:64px; border-radius:50%;
+        border: 4px solid var(--surface2); border-top-color: var(--primary);
+        animation: spin 0.9s linear infinite; margin: 0 auto 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title { font-family:'Bebas Neue', sans-serif; font-size:1.4rem; margin-bottom:10px; letter-spacing:0.03em; }
+    .loading-step { font-size:13px; color: var(--text-muted); font-weight:600; height:20px; }
+
+    /* Resultado */
+    .result-badge {
+        text-align:center; font-size:12px; font-weight:800; letter-spacing:0.05em;
+        color: var(--primary); text-transform:uppercase; margin-bottom:6px;
+    }
+    .result-perfil { font-family:'Bebas Neue', sans-serif; font-size:1.6rem; text-align:center; margin-bottom:16px; letter-spacing:0.02em; }
+    .result-card {
+        background: var(--surface2); border:2px solid var(--primary);
+        border-radius:12px; padding:18px; margin-bottom:16px;
+        box-shadow: 0 0 30px rgba(139,92,246,0.15);
+    }
+    .result-card.vip { border-color: var(--gold); box-shadow: 0 0 30px rgba(234,179,8,0.15); }
+    .result-plan-name { font-family:'Bebas Neue', sans-serif; font-size:1.6rem; color:var(--primary); text-align:center; letter-spacing:0.05em; }
+    .result-card.vip .result-plan-name { color: var(--gold); }
+    .result-reasons { list-style:none; margin: 14px 0; }
+    .result-reasons li { display:flex; gap:8px; align-items:flex-start; font-size:13.5px; font-weight:600; margin-bottom:8px; color:#e5e7eb; }
+    .result-reasons li svg { flex-shrink:0; margin-top:2px; stroke: var(--primary); }
+    .result-card.vip .result-reasons li svg { stroke: var(--gold); }
+    .result-price-wrap { text-align:center; margin: 14px 0; }
+    .result-price-de { color: var(--red); text-decoration:line-through; font-size:1rem; font-weight:700; }
+    .result-price-por { font-size:12.5px; color:var(--text-muted); font-weight:600; margin:2px 0; }
+    .result-price-num {
+        font-family:'Bebas Neue', sans-serif; font-size:2.6rem; letter-spacing:0.02em;
+        background: linear-gradient(90deg, #c4b5fd, #8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .result-card.vip .result-price-num { background: linear-gradient(90deg, #ffde43, #ffb800); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    .result-urgencia {
+        text-align:center; font-size:12px; color:var(--text-dim); font-weight:700; margin-bottom:14px;
+    }
+    .result-urgencia b { color: var(--primary); }
+
+    .trust-badges-quiz { display:flex; justify-content:center; flex-wrap:wrap; gap:6px 12px; margin-top:12px; font-size:11px; color:var(--text-muted); font-weight:600; }
+
+    .result-restart { display:block; text-align:center; margin-top:16px; font-size:12.5px; color: var(--text-dim); font-weight:700; text-decoration:underline; cursor:pointer; background:none; border:none; width:100%; }
+
+    @media (max-width: 400px) {
+        .quiz-body { padding: 20px 18px 24px; }
+        .intro-title { font-size: 1.75rem; }
+        .q-title { font-size: 1.3rem; }
+    }
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div class="quiz-shell">
+    <div class="quiz-progress-wrap">
+        <div class="quiz-progress-track"><div class="quiz-progress-bar" id="progressBar"></div></div>
+        <div class="quiz-progress-label"><span id="progressText">Início</span><span id="progressPct">0%</span></div>
+    </div>
+
+    <div class="quiz-body">
+
+        <!-- INTRO -->
+        <div class="q-screen active" data-step="intro">
+            <div class="intro-badge">⚡ Teste rápido · 30 segundos</div>
+            <h1 class="intro-title">Descubra seu <span class="hl">PAINEL IDEAL</span> pro seu perfil de jogo</h1>
+            <p class="intro-sub">Responda 5 perguntas rápidas e a gente te mostra exatamente qual painel vai fazer você dar <strong style="color:#ef4444;">full vermelho</strong> sem levar ban.</p>
+            <div class="intro-stats">
+                <div class="intro-stat"><b>+10mil</b><span>PLAYERS</span></div>
+                <div class="intro-stat"><b>4.9★</b><span>AVALIAÇÃO</span></div>
+                <div class="intro-stat"><b>100%</b><span>ANTI-BAN</span></div>
+            </div>
+            <button class="btn-verde" onclick="startQuiz()">⚔️ COMEÇAR TESTE</button>
+        </div>
+
+        <!-- Q1 -->
+        <div class="q-screen" data-step="1">
+            <h2 class="q-title">O que mais te irrita hoje no Free Fire?</h2>
+            <div class="q-options" data-q="1">
+                <div class="q-opt" data-value="mira" data-label="Erro os tiros e perco pra quem devia ganhar fácil"><span class="q-emoji">🎯</span><span>Erro os tiros e perco pra quem devia ganhar fácil</span></div>
+                <div class="q-opt" data-value="ban" data-label="Tomo ban toda vez que uso outro painel"><span class="q-emoji">💀</span><span>Tomo ban toda vez que uso outro painel</span></div>
+                <div class="q-opt" data-value="grana" data-label="Não tenho grana pra ficar gastando com skin/pass"><span class="q-emoji">😤</span><span>Não tenho grana pra ficar gastando com skin/pass</span></div>
+                <div class="q-opt" data-value="fama" data-label="Quero ser reconhecido, dar full vermelho sempre"><span class="q-emoji">🏆</span><span>Quero ser reconhecido, dar full vermelho sempre</span></div>
+            </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="q-screen" data-step="2">
+            <h2 class="q-title">Qual aparelho você mais usa pra jogar?</h2>
+            <div class="q-options" data-q="2">
+                <div class="q-opt" data-value="android" data-label="Android"><span class="q-emoji">🤖</span><span>Android</span></div>
+                <div class="q-opt" data-value="iphone" data-label="iPhone / iOS"><span class="q-emoji">🍎</span><span>iPhone / iOS</span></div>
+            </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="q-screen" data-step="3">
+            <h2 class="q-title">Com que frequência você joga?</h2>
+            <div class="q-options" data-q="3">
+                <div class="q-opt" data-value="todo_dia" data-label="Todo dia, sem falhar"><span class="q-emoji">🔥</span><span>Todo dia, sem falhar</span></div>
+                <div class="q-opt" data-value="fds" data-label="Só nos finais de semana"><span class="q-emoji">📅</span><span>Só nos finais de semana</span></div>
+                <div class="q-opt" data-value="as_vezes" data-label="De vez em quando"><span class="q-emoji">🎮</span><span>De vez em quando</span></div>
+            </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="q-screen" data-step="4">
+            <h2 class="q-title">O que mais te dá medo de usar um painel?</h2>
+            <div class="q-options" data-q="4">
+                <div class="q-opt" data-value="ban" data-label="Tomar Ban ou cair em Blacklist"><span class="q-emoji">🚫</span><span>Tomar Ban ou cair em Blacklist</span></div>
+                <div class="q-opt" data-value="bug" data-label="Não funcionar / dar erro no meu aparelho"><span class="q-emoji">🐛</span><span>Não funcionar / dar erro no meu aparelho</span></div>
+                <div class="q-opt" data-value="dificil" data-label="Ser complicado de instalar"><span class="q-emoji">🤯</span><span>Ser complicado de instalar</span></div>
+            </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="q-screen" data-step="5">
+            <h2 class="q-title">Se pudesse ter mira perfeita + anti-ban + suporte VIP + atualização pra sempre, você...</h2>
+            <div class="q-options" data-q="5">
+                <div class="q-opt" data-value="vip" data-label="Quero o melhor de tudo, sem economizar"><span class="q-emoji">👑</span><span>Quero o melhor de tudo, sem economizar</span></div>
+                <div class="q-opt" data-value="basico" data-label="Só preciso do básico funcionando bem"><span class="q-emoji">✅</span><span>Só preciso do básico funcionando bem</span></div>
+            </div>
+        </div>
+
+        <!-- LOADING -->
+        <div class="q-screen loading-screen" data-step="loading">
+            <div class="loading-ring"></div>
+            <p class="loading-title">Analisando seu perfil de jogador...</p>
+            <p class="loading-step" id="loadingStep">Cruzando suas respostas com +10.000 players</p>
+        </div>
+
+        <!-- RESULT -->
+        <div class="q-screen" data-step="result">
+            <p class="result-badge">Resultado do seu teste</p>
+            <h2 class="result-perfil" id="resultPerfilTitulo">Seu perfil: Jogador Competitivo</h2>
+
+            <div class="result-card" id="resultCard">
+                <p class="result-plan-name" id="resultPlanName">PAINEL ANDROID</p>
+                <ul class="result-reasons" id="resultReasons"></ul>
+                <div class="result-price-wrap">
+                    <p class="result-price-de" id="resultPriceDe">De R$ 147,90</p>
+                    <p class="result-price-por">Por apenas</p>
+                    <p class="result-price-num" id="resultPriceNum">R$ 29,90</p>
+                </div>
+                <a href="#" target="_blank" class="btn-verde" id="resultCta">🛒 QUERO ESSE PAINEL AGORA!</a>
+                <div class="trust-badges-quiz">
+                    <span>🔒 Compra 100% segura</span>
+                    <span>⚡ Entrega imediata</span>
+                    <span id="resultGarantia">🛡️ Garantia de 7 dias</span>
+                </div>
+            </div>
+
+            <p class="result-urgencia">🔥 Baseado no seu perfil, essa recomendação vale por <b id="resultTimer">20:00</b></p>
+
+            <button class="result-restart" onclick="restartQuiz()">↺ Refazer o teste</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // ====== ORDEM DAS ETAPAS ======
+    const STEPS = ['intro','1','2','3','4','5','loading','result'];
+    let currentIndex = 0;
+    const respostas = {};
+
+    const screens = {};
+    document.querySelectorAll('.q-screen').forEach(el => screens[el.dataset.step] = el);
+
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressPct = document.getElementById('progressPct');
+
+    const STEP_LABELS = { intro: 'Início', 1:'Pergunta 1 de 5', 2:'Pergunta 2 de 5', 3:'Pergunta 3 de 5', 4:'Pergunta 4 de 5', 5:'Pergunta 5 de 5', loading:'Analisando', result:'Resultado' };
+
+    function updateProgress() {
+        const questionSteps = ['intro','1','2','3','4','5','loading','result'];
+        const idx = questionSteps.indexOf(STEPS[currentIndex]);
+        const pct = Math.round((idx / (questionSteps.length - 1)) * 100);
+        progressBar.style.width = pct + '%';
+        progressText.textContent = STEP_LABELS[STEPS[currentIndex]];
+        progressPct.textContent = pct + '%';
+    }
+
+    function goToStep(stepKey) {
+        Object.values(screens).forEach(s => s.classList.remove('active'));
+        screens[stepKey].classList.add('active');
+        currentIndex = STEPS.indexOf(stepKey);
+        updateProgress();
+    }
+
+    function startQuiz() { goToStep('1'); }
+
+    // Clique nas opções -> avança automaticamente (menos fricção = mais conclusão)
+    document.querySelectorAll('.q-options').forEach(group => {
+        group.addEventListener('click', (e) => {
+            const opt = e.target.closest('.q-opt');
+            if (!opt) return;
+            const qNum = group.dataset.q;
+            respostas['q' + qNum] = opt.dataset.value;
+            group.querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            setTimeout(() => {
+                const next = STEPS[STEPS.indexOf(qNum) + 1];
+                if (next === 'loading') { runLoading(); }
+                else { goToStep(next); }
+            }, 280);
+        });
+    });
+
+    function runLoading() {
+        goToStep('loading');
+        const msgs = [
+            'Cruzando suas respostas com +10.000 players',
+            'Calculando o painel ideal pro seu estilo',
+            'Verificando compatibilidade com seu aparelho',
+            'Quase lá...'
+        ];
+        const el = document.getElementById('loadingStep');
+        let i = 0;
+        el.textContent = msgs[0];
+        const timer = setInterval(() => {
+            i++;
+            if (i < msgs.length) { el.textContent = msgs[i]; }
+            else { clearInterval(timer); showResult(); }
+        }, 550);
+    }
+
+    // ====== LÓGICA DE RECOMENDAÇÃO ======
+    const CHECKOUT = {
+        android: 'https://ggcheckout.app/checkout/v5/6h2AaJ1Pm256ijSFQay8',
+        iphone: 'https://ggcheckout.app/checkout/v5/2IvPVxU1JbX5naLV8mZb',
+        vip: 'https://ggcheckout.app/checkout/v5/26wfLRhM3taBgtBvEJVe'
+    };
+
+    const PERFIL_TITULO = {
+        mira: 'Jogador Competitivo Frustrado',
+        ban: 'Jogador Cansado de Levar Ban',
+        grana: 'Jogador Esperto e Econômico',
+        fama: 'Futuro Jogador Prime'
+    };
+
+    function showResult() {
+        const dispositivo = respostas.q2 || 'android';
+        const querVip = respostas.q5 === 'vip';
+        const plano = querVip ? 'vip' : dispositivo;
+
+        document.getElementById('resultPerfilTitulo').textContent =
+            'Seu perfil: ' + (PERFIL_TITULO[respostas.q1] || 'Jogador Dedicado');
+
+        const card = document.getElementById('resultCard');
+        const nomeEl = document.getElementById('resultPlanName');
+        const ctaEl = document.getElementById('resultCta');
+        const priceDeEl = document.getElementById('resultPriceDe');
+        const priceNumEl = document.getElementById('resultPriceNum');
+        const garantiaEl = document.getElementById('resultGarantia');
+        const reasonsEl = document.getElementById('resultReasons');
+
+        const checkIcon = (cor) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${cor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+
+        let reasons = [];
+        if (respostas.q1 === 'mira') reasons.push('Mira automática Full Capa, direto na cabeça');
+        if (respostas.q1 === 'ban') reasons.push('100% Anti-Ban e Anti-Blacklist testado por +10mil players');
+        if (respostas.q1 === 'grana') reasons.push('Investimento menor que uma pizza, resultado imediato');
+        if (respostas.q1 === 'fama') reasons.push('Sensi VIP + disfarce indetectável pra você dominar sem ser pego');
+        if (respostas.q4 === 'ban') reasons.push('Sistema Stealth: disfarce 100% indetectável');
+        if (respostas.q4 === 'bug') reasons.push('Compatível e testado no seu aparelho, sem travar');
+        if (respostas.q4 === 'dificil') reasons.push('Tutorial passo a passo + suporte no WhatsApp pra te ajudar a instalar');
+        if (respostas.q3 === 'todo_dia') reasons.push('Atualização constante, sempre pronto pra você jogar');
+
+        if (plano === 'vip') {
+            card.classList.add('vip');
+            nomeEl.textContent = '👑 PAINEL PREMIUM VIP';
+            ctaEl.textContent = '👑 QUERO SER PREMIUM!';
+            ctaEl.classList.add('dourado');
+            ctaEl.href = CHECKOUT.vip;
+            priceDeEl.textContent = 'De R$ 297,90';
+            priceNumEl.textContent = 'R$ 47,99';
+            garantiaEl.textContent = '🛡️ Garantia de 30 dias';
+            reasons.unshift('Android + iPhone/iOS no mesmo painel, sem escolher');
+            reasons.push('Suporte VIP exclusivo 24h + atualizações vitalícias');
+        } else if (plano === 'iphone') {
+            nomeEl.textContent = 'PAINEL IPHONE/IOS';
+            ctaEl.textContent = '🛒 COMPRAR AGORA!';
+            ctaEl.href = CHECKOUT.iphone;
+            priceDeEl.textContent = 'De R$ 197,90';
+            priceNumEl.textContent = 'R$ 29,90';
+            garantiaEl.textContent = '🛡️ Garantia de 7 dias';
+        } else {
+            nomeEl.textContent = 'PAINEL ANDROID';
+            ctaEl.textContent = '🛒 COMPRAR AGORA!';
+            ctaEl.href = CHECKOUT.android;
+            priceDeEl.textContent = 'De R$ 147,90';
+            priceNumEl.textContent = 'R$ 29,90';
+            garantiaEl.textContent = '🛡️ Garantia de 7 dias';
+        }
+
+        reasonsEl.innerHTML = reasons.slice(0, 5).map(r => `<li>${checkIcon(plano === 'vip' ? '#eab308' : '#8b5cf6')}<span>${r}</span></li>`).join('');
+
+        goToStep('result');
+    }
+
+    function restartQuiz() {
+        for (const k in respostas) delete respostas[k];
+        document.querySelectorAll('.q-opt.selected').forEach(o => o.classList.remove('selected'));
+        document.getElementById('resultCard').classList.remove('vip');
+        document.getElementById('resultCta').classList.remove('dourado');
+        goToStep('intro');
+    }
+
+    // ====== TIMER DE URGÊNCIA (mesmo padrão do site: 20min, sincronizado, reinicia sozinho) ======
+    function updateResultTimer() {
+        const cicloMs = 20 * 60 * 1000;
+        const restante = cicloMs - (Date.now() % cicloMs);
+        const m = String(Math.floor(restante / 60000)).padStart(2, '0');
+        const s = String(Math.floor((restante % 60000) / 1000)).padStart(2, '0');
+        const el = document.getElementById('resultTimer');
+        if (el) el.textContent = `${m}:${s}`;
+    }
+    updateResultTimer();
+    setInterval(updateResultTimer, 1000);
+
+    updateProgress();
+</script>
+
+<!-- ====== FUNDO ANIMADO (mesmo estilo futurista/3D do site principal) ====== -->
+<script>
+(function() {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, t = 0;
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+
+    const NODE_COUNT = 40;
+    let nodes = [];
+    function randRange(a,b){ return a + Math.random()*(b-a); }
+    function createNodes() {
+        nodes = Array.from({length:NODE_COUNT}, () => ({
+            x: randRange(0,W), y: randRange(0,H*0.55), z: randRange(60,500),
+            vx: randRange(-0.1,0.1), vy: randRange(-0.05,0.05), vz: randRange(-0.25,0.25), r: randRange(1,2.2)
+        }));
+    }
+    function project(n){ const fov=320, scale=fov/(fov+n.z); return { sx: n.x*scale + W*(1-scale)/2, sy: n.y*scale + H*(1-scale)/2, scale }; }
+    function drawNodes() {
+        nodes.forEach(n => { n.x+=n.vx; n.y+=n.vy; n.z+=n.vz;
+            if (n.x<0||n.x>W) n.vx*=-1; if (n.y<0||n.y>H*0.55) n.vy*=-1; if (n.z<60||n.z>500) n.vz*=-1; });
+        const proj = nodes.map(n => ({...project(n), node:n}));
+        for (let i=0;i<proj.length;i++) for (let j=i+1;j<proj.length;j++) {
+            const a=proj[i], b=proj[j], dx=a.sx-b.sx, dy=a.sy-b.sy, dist=Math.sqrt(dx*dx+dy*dy);
+            if (dist<120) { const alpha=(1-dist/120)*0.12*a.scale*b.scale*3;
+                ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy);
+                ctx.strokeStyle=`rgba(139,92,246,${alpha})`; ctx.lineWidth=0.6; ctx.stroke(); }
+        }
+        proj.forEach(({sx,sy,scale}) => { const r=1.5*scale*2; const alpha=0.3+scale*0.5;
+            ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.fillStyle=`rgba(196,181,253,${alpha})`; ctx.fill(); });
+    }
+    function drawGrid() {
+        const horizon = H*0.6, vp={x:W/2,y:horizon}, COLS=18, ROWS=14, speed=(t*0.5)%(H/ROWS);
+        for (let i=0;i<=COLS;i++) { const xf=i/COLS;
+            ctx.beginPath(); ctx.moveTo(vp.x,vp.y); ctx.lineTo(W*xf,H);
+            ctx.strokeStyle=`rgba(139,92,246,${0.04+0.04*Math.sin(xf*Math.PI)})`; ctx.lineWidth=0.7; ctx.stroke(); }
+        for (let j=0;j<=ROWS;j++) { const yf=j/ROWS, persp=Math.pow(yf,2.6), y=horizon+(H-horizon)*persp+speed;
+            if (y>H||y<horizon) continue;
+            const alpha=0.02+0.07*persp, xl=vp.x-vp.x*persp*1.3, xr=vp.x+(W-vp.x)*persp*1.3;
+            ctx.beginPath(); ctx.moveTo(xl,y); ctx.lineTo(xr,y);
+            ctx.strokeStyle=`rgba(139,92,246,${alpha})`; ctx.lineWidth=0.6+persp*1.3; ctx.stroke(); }
+    }
+    function drawVignette() {
+        const g = ctx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.9);
+        g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(2,0,10,0.68)');
+        ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }
+    function draw() { t++; ctx.fillStyle='#06060e'; ctx.fillRect(0,0,W,H); drawGrid(); drawNodes(); drawVignette(); requestAnimationFrame(draw); }
+    window.addEventListener('resize', () => { resize(); createNodes(); });
+    resize(); createNodes(); draw();
+})();
+</script>
+</body>
+</html>
